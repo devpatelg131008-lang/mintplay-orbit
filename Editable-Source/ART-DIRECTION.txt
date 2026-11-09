@@ -1,0 +1,13 @@
+Timber Strike artwork
+
+The two raster assets were generated for this project. Both original images
+are included in source/src/assets. The six log cells are trimmed at runtime
+using their transparency. Weapons and interface icons are original vectors
+drawn in source/src/render.js and source/src/index.template.html.
+
+animated-wood
+Use case: stylized-concept. A background illustration for a MOBILE animated wooden arcade game, portrait 1024x1536. Charming handcrafted 2D painted game art, clean bold shapes with softly painted shading, animated movie prop design rather than photographic realism. Layered wooden slabs and wide vertical boards in chestnut and warm terracotta brown, bevels and rounded carved edges; a few abstract leaf silhouettes tucked near outer edges in muted moss green. Main central 75 percent is a calm medium-dark warm brown board with only sparse big stylized grain lines; spacious uncluttered playing area. The corners and edges show overlapping wooden layers, soft golden bounced light. Carefully crafted wood theme, sophisticated arcade illustration, warm welcoming color grading. Flat front view, no perspective ground plane. No characters, no animals, no log targets, no weapons, no writing, no UI. No photoreal wood grain, no photographs, no black center, no neon.
+
+animated-logs
+Use case: stylized-concept. Game sprite sheet for a MOBILE animated wooden arcade game. EXACTLY SIX separate front-facing round log cross sections, in an evenly spaced THREE COLUMNS BY TWO ROWS grid, on a fully transparent background. All six discs equal size and centered in equal rectangular cells, generous 10 percent empty padding inside each cell, no touching. Each log is viewed perfectly straight-on as a circle, no elliptical perspective, no cylindrical side view. Style is polished hand-painted 2D animated game art with rounded chunky bark shapes, clear simplified concentric growth rings, soft cel-shaded highlights and appealing silhouette, NOT a photograph or realistic wood scan. Top row: golden oak with chunky dark bark; pale ivory birch with white cracked bark; terracotta cedar with angular reddish bark. Bottom row: deep caramel walnut with wavy growth rings; amber pine with a small knot off center; pale warm ash with three tiny moss-green tufts on bark. Each face has visible stylized growing rings and one or two modest cracks, a different pith and bark pattern. Bold readable shapes even displayed at 180 pixels across on a phone. Solid wooden unbroken discs, natural warm colors, moderate shadows painted into each sprite, consistent upper-left warm light, no shadows outside sprites. NO text, NO labels, NO tools, NO arrows, NO animals. Genuinely transparent background.
+
