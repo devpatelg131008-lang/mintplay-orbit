@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#080d17">
+<title>Orbit Space — Mint Play</title>
+<style>
+:root{color-scheme:dark;--ink:#ecf3fb;--mute:#a7b8cb;--cyan:#78e0ef;--line:#829cb942;--panel:#101925}*{box-sizing:border-box}body{margin:0;background:#080d17;color:var(--ink);font:15px system-ui,sans-serif;overflow:hidden}button{font:inherit;color:inherit;cursor:pointer;border:1px solid var(--line);border-radius:4px;background:#111d2b;padding:10px 14px}button:hover{border-color:var(--cyan)}button:focus-visible{outline:2px solid var(--cyan);outline-offset:4px}button:disabled{opacity:.5;cursor:default}[hidden]{display:none!important}canvas{position:fixed;inset:0;width:100%;height:100%;touch-action:none}
+.hud{position:fixed;inset:0;pointer-events:none;padding:max(18px,env(safe-area-inset-top)) max(23px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(23px,env(safe-area-inset-left));display:flex;flex-direction:column;justify-content:space-between}.bar,.foot{display:flex;align-items:center;justify-content:space-between;gap:12px}.bar{align-items:flex-start}.brand,.micro,.readout small{font:600 10px/1.5 system-ui,sans-serif;letter-spacing:.2em;text-transform:uppercase;color:var(--mute)}.brand{color:var(--cyan)}.wordmark{font-weight:750;font-size:18px;letter-spacing:-.03em}.readout{display:flex;gap:clamp(12px,3vw,42px);text-align:center}.readout div{min-width:42px}.readout strong{display:block;font:600 clamp(17px,3vw,27px)/1.15 ui-monospace,monospace}.tools{display:flex;gap:7px;pointer-events:auto}.tools button{min-height:44px}.wallet{color:var(--cyan)}.mission{position:absolute;left:max(24px,env(safe-area-inset-left));top:40%;max-width:23vw}.mission strong{display:block;font-size:clamp(15px,2vw,23px);margin:6px 0}.mission p{margin:0;color:var(--mute);font-size:12px}.foot{font-size:12px;color:var(--mute);letter-spacing:.04em}.cells{display:flex;gap:5px;margin-top:8px}.cells i{width:18px;height:4px;background:#344257}.cells i.on{background:var(--cyan);box-shadow:0 0 10px #78e0ef55}
+.overlay{position:fixed;inset:0;display:grid;align-items:center;padding:24px clamp(24px,9vw,140px);background:linear-gradient(90deg,#060b15f2,#060b15b0 35%,transparent 78%);pointer-events:none}.menu{max-width:420px;pointer-events:auto}.menu h1{font-size:clamp(45px,8vw,104px);line-height:.85;letter-spacing:-.08em;margin:14px 0 24px}.menu p{color:#bdcbdc;max-width:29ch;line-height:1.55}.action{background:var(--cyan);color:#08141d;border-color:var(--cyan);font-weight:800;min-width:135px}.menu .buttons{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}.menu .micro{color:var(--cyan)}dialog{width:min(650px,calc(100% - 28px));max-height:85dvh;background:var(--panel);color:var(--ink);border:1px solid #445972;border-radius:8px;padding:20px}dialog::backdrop{background:#040811be}.shophead{display:flex;justify-content:space-between;gap:14px;align-items:center;margin-bottom:15px}.shophead h2{margin:0;font-size:26px}.shophead p{margin:5px 0 0;color:var(--cyan)}.rack{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.item{background:#0b131f;border:1px solid var(--line);padding:10px;border-radius:4px;display:grid;gap:7px}.item svg{width:100%;height:54px;background:radial-gradient(ellipse,#26394d,transparent 72%)}.item small{color:var(--mute)}.item button{padding:7px 4px}
+@media(max-width:700px){.hud{padding:12px}.bar{flex-wrap:wrap}.readout{order:3;width:100%;justify-content:center}.mission{top:auto;bottom:62px;left:14px;max-width:75vw}.mission strong{margin:1px 0}.mission p{display:none}.foot{font-size:10px}.overlay{align-items:end;padding:20px 20px max(70px,12dvh);background:linear-gradient(0deg,#060b15f8,#060b15b0 24%,transparent 66%)}.menu h1{margin:8px 0 12px}.menu p{font-size:14px}.menu .buttons{margin-top:12px}.tools button{padding:7px 9px}}
+</style>
+</head>
+<body>
+<canvas id="field" tabindex="-1" aria-label="Orbit Space arena"></canvas>
+<main class="hud" aria-label="Orbit Space game">
+<div class="bar"><div><div class="brand">Mint Play</div><div class="wordmark">Orbit Space</div></div>
+<div class="readout"><div><small>Sector</small><strong id="level">01</strong></div><div><small>Score</small><strong id="score">0</strong></div><div><small>Starbits</small><strong class="wallet" id="balance">0</strong></div></div>
+<div class="tools"><button id="armory">Armory</button><button id="pause" hidden aria-label="Pause">Ⅱ</button></div></div>
+<div class="mission" id="mission" hidden><div class="micro" id="zone"></div><strong id="world"></strong><p id="weapon"></p><div class="cells" id="hull" aria-label="Hull integrity"></div></div>
+<div class="foot"><span id="guide">Tap or press Space to fire</span><span id="remaining"></span></div>
+</main>
+<section class="overlay" id="overlay"><div class="menu"><div class="micro" id="kicker">Mint Play / Deep space</div><h1 id="title">Orbit<br>Space</h1><p id="description">Launch into the gaps. Anchor every shot to push deeper into the system.</p><div class="buttons"><button class="action" id="action">Start game</button><button id="restart" hidden>New run</button></div></div></section>
+<dialog id="shop" aria-labelledby="shopTitle"><div class="shophead"><div><h2 id="shopTitle">Armory</h2><p id="shopBalance"></p></div><form method="dialog"><button>Close</button></form></div><div class="rack" id="rack"></div><p id="shopStatus" role="status"></p></dialog>
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const canvas = $('field'), ctx = canvas.getContext('2d');
+const TAU = Math.PI * 2, FRONT = Math.PI / 2;
+const clamp = (x,a,b) => Math.max(a, Math.min(x,b));
+const wrap = x => (x % TAU + TAU) % TAU;
+const separation = (a,b) => Math.acos(clamp(Math.cos(a-b),-1,1));
+const ease = x => x*x*(3-2*x);
+const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+const worlds = [
+  ['Acheron','Impact basin',[119,116,108],[214,185,142],'#eeb97e',0],
+  ['Vesta','Basalt frontier',[132,68,43],[234,156,95],'#fd946b',1],
+  ['Nereid','Cryogenic shelf',[54,102,128],[164,221,235],'#93dfed',2],
+  ['Ionos','Gas giant',[147,108,76],[230,204,162],'#f4c18c',3],
+  ['Meridian','Silicate desert',[113,76,118],[218,166,165],'#cda0ed',1],
+  ['Terminus','Frozen methane',[42,76,100],[155,176,193],'#a6c4ee',2],
+];
+const arsenal = [
+  {id:'lime',name:'Survey Spike',cost:0,speed:4.1,width:.11,color:'#9acddc',desc:'Balanced launch speed',shape:'0,0 13,-5 34,-4 39,0 34,4 13,5'},
+  {id:'peach',name:'Rail Needle',cost:15,speed:5.6,width:.073,color:'#8ee8fd',desc:'Fast, narrow impact',shape:'0,0 17,-3 34,-3 46,-1 46,1 34,3 17,3'},
+  {id:'sherbet',name:'Titan Blade',cost:32,speed:3.4,width:.14,color:'#ffca91',desc:'Heavy blade · +1 Starbit per hit',shape:'0,0 11,-9 35,-9 35,-13 40,-13 40,-3 49,-3 49,3 40,3 40,13 35,13 35,9 11,9'},
+  {id:'blossom',name:'Twin Fang',cost:55,speed:4.7,width:.10,color:'#d3b5ff',desc:'Forked tip · +2 per streak bonus',shape:'0,-6 22,-8 36,-5 43,0 36,5 22,8 0,6 12,0'},
+  {id:'ion',name:'Ion Lance',cost:85,speed:6.8,width:.085,color:'#a9f5c6',desc:'High-velocity energy lance',shape:'0,0 14,-2 22,-6 43,-6 48,-3 53,-3 53,3 48,3 43,6 22,6 14,2'},
+  {id:'siege',name:'Siege Harpoon',cost:120,speed:3.8,width:.125,color:'#fc987b',desc:'Barbed head · +3 Starbits per sector',shape:'0,0 17,-12 13,-4 35,-4 39,-8 51,-8 51,8 39,8 35,4 13,4 17,12'},
+];
+const defaultProfile = () => ({balance:0,owned:['lime'],equipped:'lime',best:0});
+const saveKey = 'mint-play-orbit-space-v2';
+function readProfile() {
+  try {
+    const old = JSON.parse(localStorage.getItem(saveKey));
+    if (old && Array.isArray(old.owned)) return {...defaultProfile(),...old};
+  } catch {}
+  return defaultProfile();
+}
+let profile = readProfile();
+function save() {
+  try { localStorage.setItem(saveKey,JSON.stringify(profile)); return true; }
+  catch { return false; }
+}
+function importLegacy() {
+  try {
+    if (localStorage.getItem(saveKey) || !window.indexedDB) return;
+    const open = indexedDB.open('mint-play-arcade-v1',1);
+    open.onupgradeneeded = () => open.transaction.abort();
+    open.onsuccess = () => {
+      const db = open.result;
+      if (!db.objectStoreNames.contains('profiles')) { db.close(); return; }
+      const tx = db.transaction('profiles'), read = tx.objectStore('profiles').get('orbit');
+      tx.oncomplete = () => db.close();
+      read.onsuccess = () => {
+        if (!read.result || phase !== 'ready' || localStorage.getItem(saveKey)) return;
+        const prior = read.result;
+        profile = {...defaultProfile(),balance:prior.balance,best:prior.best,
+          owned:arsenal.filter(a => a.cost === 0 || prior.owned?.includes(a.id)).map(a=>a.id),
+          equipped:arsenal.some(a=>a.id===prior.equipped) ? prior.equipped : 'lime'};
+        save(); updateHud(); renderShop();
+      };
+    };
+  } catch {}
+}
+const equipped = () => arsenal.find(item=>item.id===profile.equipped) || arsenal[0];
+let phase = 'ready', width, height, cx, cy, radius, launcher, shot, worldIndex = 0;
+let level = 1, score = 0, lives = 3, streak = 0, left = 7, angle = 0, time = 0;
+let transition = 0, cooldown = 0, impact = 0, flash = 0, revival = false;
+let pins = [], particles = [], textureCache = new Map();
+function rng(seed) {return () => {seed = (Math.imul(1664525,seed)+1013904223) >>> 0; return seed/4294967296;};}
+const roll = rng(9843);
+const stars = Array.from({length:310},()=>[roll(),roll(),roll(),roll()]);
+function canvasOf(w,h) {const c=document.createElement('canvas');c.width=w;c.height=h;return c;}
+function circle(c,x,y,r,color) {c.fillStyle=color;c.beginPath();c.arc(x,y,r,0,TAU);c.fill();}
+function texture(index) {
+  if (textureCache.has(index)) return textureCache.get(index);
+  const size=384, world=worlds[index], out=canvasOf(size,size), c=out.getContext('2d'), image=c.createImageData(size,size);
+  const random=rng(12458+index*767), field=Array.from({length:4096},random);
+  const noise=(x,y)=>{
+    const ix=Math.floor(x), iy=Math.floor(y), a=ease(x-ix), b=ease(y-iy);
+    const at=(i,j)=>field[(i&63)+((j&63)*64)];
+    return (at(ix,iy)*(1-a)+at(ix+1,iy)*a)*(1-b)+(at(ix,iy+1)*(1-a)+at(ix+1,iy+1)*a)*b;
+  };
+  const pits=Array.from({length:84},()=>[random()*2-1,random()*2-1,.009+random()**3*.16]);
+  const base=world[2], light=world[3], kind=world[5];
+  for(let j=0;j<size;j++) for(let i=0;i<size;i++){
+    const x=(i+.5-size/2)/(size*.477), y=(j+.5-size/2)/(size*.477), r=x*x+y*y;
+    if(r>=1)continue;
+    const z=Math.sqrt(1-r), u=Math.atan2(x,z)*2.5+15, v=Math.asin(y)*3+16;
+    const warp=noise(u,v), broad=noise(u*1.4+warp*2,v*1.3), fine=noise(u*11,v*11);
+    let relief=.55*broad+.27*noise(u*4,v*4)+.18*fine;
+    if(kind===3) relief=.5+.2*Math.sin(v*12+warp*2)+.14*Math.sin(v*27+warp*3)+fine*.09;
+    if(kind===2) relief+=.16*Math.exp(-16*Math.abs(Math.sin(u*4.1+v*3+warp*3)));
+    if(kind===0 || kind===1) for(const [px,py,pr] of pits){
+      if(Math.abs(x-px)>pr || Math.abs(y-py)>pr)continue;
+      const d=Math.hypot(x-px,y-py)/pr;
+      if(d<1)relief+=(d>.78?.16:-.14)*(1-d*.5)+(px-x)*.65;
+    }
+    const shade=.15+Math.max(0,z*.58-x*.50-y*.49)*.93;
+    const haze=Math.pow(1-z,4)*Math.max(0,.56-x*.35-y*.25);
+    const k=(j*size+i)*4;
+    for(let ch=0;ch<3;ch++)image.data[k+ch]=clamp((base[ch]*(1-relief)+light[ch]*relief)*shade+light[ch]*haze*.46,0,255);
+    image.data[k+3]=clamp((1-Math.sqrt(r))*size*.48,0,1)*255;
+  }
+  c.putImageData(image,0,0);textureCache.set(index,out);return out;
+}
+function resize(){
+  width=innerWidth;height=innerHeight;const dpi=Math.min(devicePixelRatio||1,2);
+  canvas.width=Math.round(width*dpi);canvas.height=Math.round(height*dpi);ctx.setTransform(dpi,0,0,dpi,0,0);
+  const narrow=width<700;
+  cx=width*(phase==='ready'&&!narrow?.69:.5);cy=height*(phase==='ready'&&narrow?.36:.44);
+  radius=Math.min(width*(narrow?.30:.203),height*(narrow?.195:.235),245);
+  launcher=Math.min(height-28,Math.max(cy+radius*1.55,height*.80));
+}
+function seedSector(){
+  worldIndex=(level-1)%worlds.length;left=7+Math.min(5,Math.floor((level-1)/2));
+  const count=2+Math.min(4,Math.floor((level-1)/2));
+  pins=Array.from({length:count},(_,i)=>({a:i*TAU/count+.24, item:null,depth:1}));
+  angle=0;time=0;shot=null;transition=0;
+  texture(worldIndex);
+}
+function updateHud(){
+  $('level').textContent=String(level).padStart(2,'0');
+  $('score').textContent=score.toLocaleString();$('balance').textContent=profile.balance.toLocaleString();
+  $('zone').textContent=worlds[worldIndex][1];$('world').textContent=worlds[worldIndex][0];$('weapon').textContent=equipped().name;
+  $('remaining').textContent=phase==='ready'?'':transition?'Approaching next sector':left+' anchors required';
+  const health=$('hull');health.setAttribute('aria-label',lives+' hull charges remaining');
+  health.innerHTML=Array.from({length:3},(_,i)=>'<i class="'+(i<lives?'on':'')+'"></i>').join('');
+}
+function earn(n){profile.balance+=n;profile.best=Math.max(profile.best,score);save();}
+function play(newRun){
+  if(newRun){level=1;score=0;lives=3;streak=0;revival=false;particles=[];cooldown=0;flash=0;seedSector();}
+  phase='play';$('overlay').hidden=true;$('mission').hidden=false;$('pause').hidden=false;resize();updateHud();canvas.focus({preventScroll:true});
+}
+function menu(next){
+  phase=next;$('overlay').hidden=false;$('pause').hidden=true;
+  const lost=next==='lost';
+  $('kicker').textContent=lost?'Signal lost':'Flight suspended';$('title').textContent=lost?'Hull breach':'Paused';
+  $('description').textContent=lost?'Score '+score.toLocaleString()+' · Best '+profile.best.toLocaleString():'Resume your approach when ready.';
+  $('action').textContent=lost?(revival?'Start new run':'Revive · preview'):'Resume';
+  $('restart').hidden=!lost||revival;
+}
+function trigger(){
+  if(phase!=='play'||shot||transition||cooldown>0||$('shop').open)return;
+  const origin=(launcher-21-cy)/radius;
+  shot={p:origin,v:-equipped().speed,item:equipped()};burst(0,origin,7,equipped().color,1.3);
+}
+function burst(x,y,n,color,force){
+  for(let i=0;i<(reduced?Math.min(n,5):n);i++){
+    const a=Math.random()*TAU,s=(.15+Math.random()*.85)*force;
+    particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:.22+Math.random()*.56,max:1,color,size:.9+Math.random()*2});
+  }
+  if(particles.length>320)particles.splice(0,particles.length-320);
+}
+function spin(){
+  const speed=Math.min(2.2,.88+level*.10), mode=(level-1)%4;
+  const pattern=mode===0?1:mode===1?1+.30*Math.sin(time*1.4):mode===2?Math.tanh(Math.sin(time*.62+.7)*2):1+.42*Math.max(0,Math.sin(time*2));
+  return speed*pattern*(level%2?1:-1);
+}
+function step(dt){
+  if(phase!=='play')return;
+  cooldown=Math.max(0,cooldown-dt);impact=Math.max(0,impact-dt);flash=Math.max(0,flash-dt);
+  if(transition){
+    transition+=dt;
+    if(transition>=2.25){level++;seedSector();updateHud();}
+  }else{
+    time+=dt;const omega=spin(), prior=angle;angle=wrap(angle+omega*dt);
+    if(shot){
+      const start=shot.p;shot.v-=dt*1.65;shot.p+=shot.v*dt;
+      if(shot.p<=1){
+        const hitFraction=clamp((start-1)/(start-shot.p),0,1);
+        const local=wrap(FRONT-prior-omega*dt*hitFraction);
+        const item=shot.item;shot=null;
+        const crash=pins.some(pin=>separation(pin.a,local)<item.width+(pin.item?.width??.102));
+        if(crash){
+          lives--;streak=0;cooldown=.38;impact=.24;flash=.22;
+          burst(0,1,28,'#ff835d',2.4);burst(0,1,10,'#f8d6a5',1.5);updateHud();
+          if(!lives)menu('lost');
+        }else{
+          pins.push({a:local,item,depth:0});left--;streak++;
+          score+=20+Math.min(streak,10)*4;impact=.14;
+          earn(1+(item.id==='sherbet'?1:0)+(streak%4===0?(item.id==='blossom'?4:2):0));
+          burst(0,1,20,item.color,1.45);
+          if(!left){score+=level*100;earn(item.id==='siege'?10:7);transition=.001;burst(0,1,45,worlds[worldIndex][4],2.1);}
+          updateHud();
+        }
+      }
+    }
+    for(const pin of pins)pin.depth=Math.min(1,pin.depth+dt*9);
+  }
+  for(const p of particles){
+    const inv=1/Math.pow(Math.max(.7,Math.hypot(p.x,p.y)),3);
+    p.vx-=p.x*inv*.76*dt;p.vy-=p.y*inv*.76*dt;
+    const drag=Math.exp(-dt*.8);p.vx*=drag;p.vy*=drag;p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;
+  }
+  particles=particles.filter(p=>p.life>0);
+}
+function space(now){
+  ctx.fillStyle='#060b14';ctx.fillRect(0,0,width,height);
+  const g=ctx.createRadialGradient(width*.65,height*.42,0,width*.65,height*.42,Math.max(width,height)*.74);
+  g.addColorStop(0,'#1a2a3d');g.addColorStop(.5,'#0c1524');g.addColorStop(1,'#04070d');ctx.fillStyle=g;ctx.fillRect(0,0,width,height);
+  for(const [x,y,depth,tone] of stars){
+    const speed=(reduced?0:now*.0015+transition*55)*depth;
+    const px=((x*width-speed)%width+width)%width,py=y*height;
+    ctx.fillStyle=tone>.87?'#9bbbd9':'#c4d0de';ctx.globalAlpha=.18+depth*.65;
+    const size=.5+depth*(tone>.94?1.5:.7);
+    ctx.fillRect(px,py,size+(reduced?0:transition*depth*3),size);
+  }
+  ctx.globalAlpha=1;
+}
+function silhouette(c,item,x,y,a,s){
+  c.save();c.translate(x,y);c.rotate(a);c.scale(s,s);
+  const shape=item.shape.split(' ').map(pair=>pair.split(',').map(Number));
+  const g=c.createLinearGradient(0,-9,0,9);g.addColorStop(0,'#e6f4fb');g.addColorStop(.37,item.color);g.addColorStop(.55,'#67839a');g.addColorStop(1,'#172332');
+  c.beginPath();shape.forEach(([px,py],i)=>i?c.lineTo(px,py):c.moveTo(px,py));c.closePath();c.fillStyle=g;c.fill();
+  c.strokeStyle=item.color;c.lineWidth=.7;c.stroke();c.restore();
+}
+function planet(index,x,y,r,rotation,opacity=1){
+  const world=worlds[index];
+  ctx.save();ctx.globalAlpha=opacity;
+  const aura=ctx.createRadialGradient(x,y,r*.92,x,y,r*1.25);
+  aura.addColorStop(0,world[4]+'70');aura.addColorStop(1,world[4]+'00');
+  circle(ctx,x,y,r*1.25,aura);
+  ctx.translate(x,y);ctx.rotate(rotation);
+  ctx.drawImage(texture(index),-r/.954,-r/.954,2*r/.954,2*r/.954);
+  ctx.restore();
+}
+function paint(now){
+  space(now);
+  const transit=transition?ease(clamp(transition/2.25,0,1)):0;
+  const shift=reduced?0:transit*width*.67;
+  const x=cx-shift,y=cy+transit*radius*.20,r=radius*(1-.26*transit);
+  const jitter=(!reduced&&impact>0)?Math.sin(now*.078)*impact*10:0;
+  planet(worldIndex,x+jitter,y,r,angle,1-transit);
+  if(transition)planet((worldIndex+1)%worlds.length,cx+(reduced?0:(1-transit)*width*.60),cy,radius*(.67+.33*transit),0,transit);
+  ctx.globalAlpha=1-transit;
+  for(const p of pins){
+    const a=p.a+angle, px=x+Math.cos(a)*r*(1.04-.048*p.depth), py=y+Math.sin(a)*r*(1.04-.048*p.depth);
+    silhouette(ctx,p.item||{color:'#b68365',shape:'0,0 7,-5 20,-5 26,0 20,5 7,5'},px,py,a,r*.0054);
+  }
+  ctx.globalAlpha=1;
+  if(phase!=='ready'&&!transition){
+    ctx.strokeStyle='#b0d0e13a';ctx.lineWidth=1;ctx.setLineDash([3,7]);ctx.beginPath();ctx.moveTo(cx,cy+radius+9);ctx.lineTo(cx,launcher-8);ctx.stroke();ctx.setLineDash([]);
+    ctx.strokeStyle='#8bd4eb86';ctx.beginPath();ctx.moveTo(cx-15,launcher+7);ctx.lineTo(cx-8,launcher+12);ctx.lineTo(cx+8,launcher+12);ctx.lineTo(cx+15,launcher+7);ctx.stroke();
+    if(shot){
+      const sy=cy+shot.p*radius;
+      const trail=ctx.createLinearGradient(cx,sy,cx,sy+55);trail.addColorStop(0,shot.item.color);trail.addColorStop(1,shot.item.color+'00');
+      ctx.fillStyle=trail;ctx.fillRect(cx-1.5,sy,3,55);
+      silhouette(ctx,shot.item,cx,sy,FRONT,radius*.0054);
+    }else if(!cooldown)silhouette(ctx,equipped(),cx,launcher-21,FRONT,radius*.0054);
+  }
+  for(const p of particles){
+    ctx.globalAlpha=clamp(p.life*3,0,1);
+    ctx.strokeStyle=p.color;ctx.lineWidth=p.size*.65;ctx.beginPath();
+    const px=cx+p.x*radius,py=cy+p.y*radius;
+    ctx.moveTo(px,py);ctx.lineTo(px-p.vx*radius*.025,py-p.vy*radius*.025);ctx.stroke();
+  }
+  ctx.globalAlpha=1;
+  if(flash){ctx.fillStyle='rgba(244,101,66,'+(flash*.26)+')';ctx.fillRect(0,0,width,height);}
+}
+function renderShop(){
+  $('shopBalance').textContent=profile.balance.toLocaleString()+' Starbits';
+  const rack=$('rack');rack.replaceChildren();
+  for(const item of arsenal){
+    const card=document.createElement('article');card.className='item';
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 -15 60 30');svg.setAttribute('aria-hidden','true');
+    const poly=document.createElementNS(svg.namespaceURI,'polygon');poly.setAttribute('points',item.shape);poly.setAttribute('fill',item.color);poly.setAttribute('stroke','#ecf3fb');poly.setAttribute('stroke-width','.5');svg.append(poly);
+    const name=document.createElement('strong');name.textContent=item.name;
+    const info=document.createElement('small');info.textContent=item.desc;
+    const button=document.createElement('button');const owned=profile.owned.includes(item.id), selected=item.id===profile.equipped;
+    button.textContent=selected?'Equipped':owned?'Equip':'Buy · '+item.cost;
+    button.setAttribute('aria-label',button.textContent+' '+item.name);
+    button.disabled=selected||(!owned&&profile.balance<item.cost);
+    button.onclick=()=>{
+      if(!profile.owned.includes(item.id)){if(profile.balance<item.cost)return;profile.balance-=item.cost;profile.owned.push(item.id);}
+      profile.equipped=item.id;
+      $('shopStatus').textContent=save()?item.name+' equipped.':'Equipped for this session.';
+      renderShop();updateHud();$('shop').querySelector('form button').focus();
+    };
+    card.append(svg,name,info,button);rack.append(card);
+  }
+}
+$('action').onclick=()=>{
+  if(phase==='lost'&&!revival){revival=true;lives=1;cooldown=.32;play(false);}
+  else play(phase!=='paused');
+};
+$('restart').onclick=()=>play(true);
+$('pause').onclick=()=>menu('paused');
+$('armory').onclick=()=>{if(phase==='play')menu('paused');$('shopStatus').textContent='';renderShop();$('shop').showModal();};
+canvas.addEventListener('pointerdown',e=>{if(e.isPrimary&&e.button===0)trigger();});
+addEventListener('keydown',e=>{
+  if($('shop').open)return;
+  if(e.code==='Escape'){if(phase==='play')menu('paused');else if(phase==='paused')play(false);}
+  if(e.code==='Space'&&phase==='play'&&!e.target.closest?.('button')){e.preventDefault();if(!e.repeat)trigger();}
+});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&phase==='play')menu('paused');});
+addEventListener('resize',resize);
+let previous=performance.now(), bank=0;
+function frame(now){
+  bank+=Math.min(.075,(now-previous)/1000);previous=now;
+  while(bank>=1/120){step(1/120);bank-=1/120;}
+  paint(now);requestAnimationFrame(frame);
+}
+seedSector();resize();updateHud();importLegacy();requestAnimationFrame(frame);
+</script>
+</body>
+</html>
